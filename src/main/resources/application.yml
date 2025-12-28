@@ -1,0 +1,94 @@
+spring:
+  application:
+    name: analyst
+  threads:
+    virtual:
+      enabled: true
+  
+  # Single datasource configuration for tradebot_db
+  datasource:
+    jdbc-url: ${TRADEBOT_DB_JDBC_URL:jdbc:postgresql://localhost:6543/tradebot_db}
+    username: ${TRADEBOT_DB_USER:tradebot_user}
+    # password is set from Docker secret analyst_tradebot_db_password, or set in environment variable TRADEBOT_DB_PASSWORD, do NOT set here as @ConfigurationProperties will overwrite it
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+      maximum-pool-size: 10
+      minimum-idle: 5
+      pool-name: AnalystHikariCP
+
+  # JPA configuration
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+
+  # AI model configuration
+  ai:
+    chat:
+      client:
+        enabled: false # disable auto configuration
+    openai: # supports openrouter
+      base-url: ${OPENROUTER_BASE_URL:https://openrouter.ai/api}
+      # this is a dummy api-key just to satisfy the auto configuration of Spring AI
+      # real api key for our models is set from Docker secret openrouter_api_key, or set in environment variable OPENROUTER_API_KEY, do NOT set here
+      api-key: 1111
+      chat:
+        options:
+          model:
+            fast: ${OPENROUTER_MODEL_FAST}
+            slow: ${OPENROUTER_MODEL_SLOW}
+      http:
+        client:
+          connect-timeout-secs: ${OPENROUTER_HTTP_CLIENT_CONNECT_TIMEOUT_SECS:5}
+          read-timeout-secs: ${OPENROUTER_HTTP_CLIENT_READ_TIMEOUT_SECS:120}
+
+server:
+  port: ${ANALYST_SERVER_PORT:8822}
+  address: 0.0.0.0
+
+app:
+  flash-news:
+    analysis-batch-size: ${FLASH_NEWS_ANALYSIS_BATCH_SIZE:10}
+    analysis-include-example: ${FLASH_NEWS_ANALYSIS_INCLUDE_EXAMPLE:false}
+  article:
+    filter-batch-size: ${ARTICLE_FILTER_BATCH_SIZE:10}
+    filter-include-example: ${ARTICLE_FILTER_INCLUDE_EXAMPLE:false}
+    analysis-include-example: ${ARTICLE_ANALYSIS_INCLUDE_EXAMPLE:false}
+  research:
+    include-example: ${RESEARCH_INCLUDE_EXAMPLE:false}
+    search-tool: ${RESEARCH_SEARCH_TOOL:openrouter}
+  consult-user:
+    include-example: ${CONSULT_USER_INCLUDE_EXAMPLE:false}
+
+  induction:
+    filter-batch-size: ${INDUCTION_FILTER_BATCH_SIZE:5}
+    filter-include-example: ${INDUCTION_FILTER_INCLUDE_EXAMPLE:false}
+    batch-size: ${INDUCTION_BATCH_SIZE:5}
+    include-example: ${INDUCTION_INCLUDE_EXAMPLE:false}
+    batch-sleep-millis: ${INDUCTION_BATCH_SLEEP_MILLIS:1000}
+
+  scheduler:
+    analyse-flash-news-cron: ${SCHEDULER_ANALYSE_FLASH_NEWS_CRON:0 * * * * ?}
+    analyse-articles-cron: ${SCHEDULER_ANALYSE_ARTICLES_CRON:0 15 * * * ?}
+    consult-user-cron: ${SCHEDULER_CONSULT_USER_CRON:0 10 * * * ?}
+    induce-cron: ${SCHEDULER_INDUCE_CRON:0 0 0 * * ?}
+
+# External service configuration
+core:
+  host: ${CORE_HOST:localhost}
+  port: ${CORE_PORT:8080}
+
+strategy:
+  host: ${STRATEGY_HOST:localhost}
+  port: ${STRATEGY_PORT:8238}
+
+crawler:
+  host: ${CRAWLER_HOST:localhost}
+  port: ${CRAWLER_PORT:9238}

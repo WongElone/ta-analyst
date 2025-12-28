@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="WARN">
+    <Properties>
+        <!-- Use environment variable LOG_DIR with default value /var/log/app -->
+        <Property name="LOG_DIR">${env:LOG_DIR:-/var/log/app}</Property>
+        <!-- Use environment variable LOG_LEVEL with default value INFO -->
+        <Property name="LOG_LEVEL">${env:LOG_LEVEL:-INFO}</Property>
+        <!-- Log pattern with timestamp, level, thread, logger, method, line number, and message -->
+        <Property name="LOG_PATTERN">%d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %-5level %logger{36}.%M:%L - %msg%n</Property>
+    </Properties>
+
+    <Appenders>
+        <!-- Console Appender for development -->
+        <Console name="Console" target="SYSTEM_OUT">
+            <PatternLayout pattern="${LOG_PATTERN}"/>
+        </Console>
+
+        <!-- Async Console Appender for development -->
+        <Async name="AsyncConsole" bufferSize="1024">
+            <AppenderRef ref="Console"/>
+            <includeLocation>true</includeLocation>
+        </Async>
+    </Appenders>
+
+    <Loggers>
+        <!-- Specific logger configurations for dependencies -->
+        <Logger name="org.springframework" level="WARN" additivity="false">
+            <AppenderRef ref="AsyncConsole"/>
+        </Logger>
+        
+        <Logger name="org.hibernate" level="WARN" additivity="false">
+            <AppenderRef ref="AsyncConsole"/>
+        </Logger>
+
+        <!-- PostgreSQL JDBC driver -->
+        <Logger name="org.postgresql" level="WARN" additivity="false">
+            <AppenderRef ref="AsyncConsole"/>
+        </Logger>
+
+        <!-- Retrofit HTTP client -->
+        <Logger name="retrofit2" level="WARN" additivity="false">
+            <AppenderRef ref="AsyncConsole"/>
+        </Logger>
+
+        <Logger name="com.squareup.retrofit2" level="WARN" additivity="false">
+            <AppenderRef ref="AsyncConsole"/>
+        </Logger>
+
+        <!-- OkHttp (used by Retrofit) -->
+        <Logger name="okhttp3" level="WARN" additivity="false">
+            <AppenderRef ref="AsyncConsole"/>
+        </Logger>
+
+        <!-- Apache HTTP components -->
+        <Logger name="org.apache.http" level="WARN" additivity="false">
+            <AppenderRef ref="AsyncConsole"/>
+        </Logger>
+
+        <!-- Netty (used by Spring WebFlux if present) -->
+        <Logger name="io.netty" level="WARN" additivity="false">
+            <AppenderRef ref="AsyncConsole"/>
+        </Logger>
+
+        <!-- Jackson JSON processing -->
+        <Logger name="com.fasterxml.jackson" level="WARN" additivity="false">
+            <AppenderRef ref="AsyncConsole"/>
+        </Logger>
+
+        <!-- Tomcat embedded server -->
+        <Logger name="org.apache.catalina" level="WARN" additivity="false">
+            <AppenderRef ref="AsyncConsole"/>
+        </Logger>
+
+        <Logger name="org.apache.tomcat" level="WARN" additivity="false">
+            <AppenderRef ref="AsyncConsole"/>
+        </Logger>
+
+        <!-- HikariCP connection pool -->
+        <Logger name="com.zaxxer.hikari" level="WARN" additivity="false">
+            <AppenderRef ref="AsyncConsole"/>
+        </Logger>
+
+        <!-- Application logger -->
+        <Logger name="traderalchemy.analyst.*" level="${LOG_LEVEL}" additivity="false">
+            <AppenderRef ref="AsyncConsole"/>
+        </Logger>
+
+        <!-- Root logger -->
+        <Root level="${LOG_LEVEL}">
+            <AppenderRef ref="AsyncConsole"/>
+        </Root>
+    </Loggers>
+</Configuration>

@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="WARN">
+    <Properties>
+        <!-- Use environment variable LOG_DIR with default value /var/log/app -->
+        <Property name="LOG_DIR">${env:LOG_DIR:-/var/log/app}</Property>
+        <!-- Use environment variable LOG_LEVEL with default value INFO -->
+        <Property name="LOG_LEVEL">${env:LOG_LEVEL:-INFO}</Property>
+        <!-- Use environment variable LLM_LOG_LEVEL with default value DEBUG -->
+        <Property name="LLM_LOG_LEVEL">${env:LLM_LOG_LEVEL:-DEBUG}</Property>
+        <!-- Lowercase version of LOG_LEVEL for filename -->
+        <Property name="LOG_LEVEL_LOWER">${lower:${env:LOG_LEVEL:-info}}</Property>
+        <!-- Log pattern with timestamp, level, thread, logger, method, line number, and message -->
+        <Property name="LOG_PATTERN">%d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %-5level %logger{36}.%M:%L - %msg%n</Property>
+    </Properties>
+
+    <Appenders>
+        <!-- Console Appender for development -->
+        <Console name="Console" target="SYSTEM_OUT">
+            <PatternLayout pattern="${LOG_PATTERN}"/>
+            <!-- Block all logs to disable console output (comment out to enable) -->
+            <ThresholdFilter level="OFF" onMatch="ACCEPT" onMismatch="DENY"/>
+        </Console>
+
+        <!-- Async Console Appender for development -->
+        <Async name="AsyncConsole" bufferSize="1024">
+            <AppenderRef ref="Console"/>
+            <includeLocation>true</includeLocation>
+
+            <!-- Block when queue is full to prevent log loss -->
+            <BlockingQueueFactory>
+                <LinkedTransferQueue/>
+            </BlockingQueueFactory>
+        </Async>
+
+        <!-- File Appender with date-based rolling and gzip compression -->
+        <RollingFile name="FileAppender" 
+                     fileName="${LOG_DIR}/analyst.${LOG_LEVEL_LOWER}.log" 
+                     filePattern="${LOG_DIR}/analyst.${LOG_LEVEL_LOWER}.log.%d{yyyy-MM-dd}-%i.gz">
+            <PatternLayout pattern="${LOG_PATTERN}"/>
+            <Policies>
+                <!-- Roll over daily -->
+                <TimeBasedTriggeringPolicy />
+                <!-- Roll over when file size exceeds 100MB -->
+                <SizeBasedTriggeringPolicy size="1000MB"/>
+            </Policies>
+            <!-- Keep maximum 30 days of logs -->
+            <DefaultRolloverStrategy max="30"/>
+        </RollingFile>
+
+        <!-- Async Appender wrapper for better performance -->
+        <Async name="AsyncFileAppender" bufferSize="8192">
+            <AppenderRef ref="FileAppender"/>
+            <!-- Include location information (class, method, line) -->
+            <includeLocation>true</includeLocation>
+            <!-- Block when queue is full to prevent log loss -->
+            <BlockingQueueFactory>
+                <LinkedTransferQueue/>
+            </BlockingQueueFactory>
+        </Async>
+
+        <!-- Error level file appender with gzip compression -->
+        <RollingFile name="ErrorFileAppender" 
+                     fileName="${LOG_DIR}/analyst.err.log" 
+                     filePattern="${LOG_DIR}/analyst.err.log.%d{yyyy-MM-dd}-%i.gz">
+            <PatternLayout pattern="${LOG_PATTERN}"/>
+            <ThresholdFilter level="ERROR" onMatch="ACCEPT" onMismatch="DENY"/>
+            <Policies>
+                <!-- Roll over daily -->
+                <TimeBasedTriggeringPolicy />
+                <!-- Roll over when file size exceeds 1000MB -->
+                <SizeBasedTriggeringPolicy size="1000MB"/>
+            </Policies>
+            <!-- Keep maximum 30 days of logs -->
+            <DefaultRolloverStrategy max="30"/>
+        </RollingFile>
+
+        <!-- Async Appender wrapper for error logs -->
+        <Async name="AsyncErrorFileAppender" bufferSize="8192">
+            <AppenderRef ref="ErrorFileAppender"/>
+            <!-- Include location information (class, method, line) -->
+            <includeLocation>true</includeLocation>
+            <!-- Block when queue is full to prevent log loss -->
+            <BlockingQueueFactory>
+                <LinkedTransferQueue/>
+            </BlockingQueueFactory>
+        </Async>
+    </Appenders>
+
+    <Loggers>
+        <!-- Specific logger configurations for dependencies -->
+        <Logger name="org.springframework" level="WARN" additivity="false">
+            <AppenderRef ref="AsyncFileAppender"/>
+            <AppenderRef ref="AsyncErrorFileAppender"/>
+            <AppenderRef ref="AsyncConsole"/>
+        </Logger>
+        
+        <Logger name="org.hibernate" level="WARN" additivity="false">
+            <AppenderRef ref="AsyncFileAppender"/>
+            <AppenderRef ref="AsyncErrorFileAppender"/>
+            <AppenderRef ref="AsyncConsole"/>
+        </Logger>
+
+        <!-- PostgreSQL JDBC driver -->
+        <Logger name="org.postgresql" level="WARN" additivity="false">
+            <AppenderRef ref="AsyncFileAppender"/>
+            <AppenderRef ref="AsyncErrorFileAppender"/>
+            <AppenderRef ref="AsyncConsole"/>
+        </Logger>
+
+        <!-- Retrofit HTTP client -->
+        <Logger name="retrofit2" level="WARN" additivity="false">
+            <AppenderRef ref="AsyncFileAppender"/>
+            <AppenderRef ref="AsyncErrorFileAppender"/>
+            <AppenderRef ref="AsyncConsole"/>
+        </Logger>
+
+        <Logger name="com.squareup.retrofit2" level="WARN" additivity="false">
+            <AppenderRef ref="AsyncFileAppender"/>
+            <AppenderRef ref="AsyncErrorFileAppender"/>
+            <AppenderRef ref="AsyncConsole"/>
+        </Logger>
+
+        <!-- OkHttp (used by Retrofit) -->
+        <Logger name="okhttp3" level="WARN" additivity="false">
+            <AppenderRef ref="AsyncFileAppender"/>
+            <AppenderRef ref="AsyncErrorFileAppender"/>
+            <AppenderRef ref="AsyncConsole"/>
+        </Logger>
+
+        <!-- Apache HTTP components -->
+        <Logger name="org.apache.http" level="WARN" additivity="false">
+            <AppenderRef ref="AsyncFileAppender"/>
+            <AppenderRef ref="AsyncErrorFileAppender"/>
+            <AppenderRef ref="AsyncConsole"/>
+        </Logger>
+
+        <!-- Netty (used by Spring WebFlux if present) -->
+        <Logger name="io.netty" level="WARN" additivity="false">
+            <AppenderRef ref="AsyncFileAppender"/>
+            <AppenderRef ref="AsyncErrorFileAppender"/>
+            <AppenderRef ref="AsyncConsole"/>
+        </Logger>
+
+        <!-- Jackson JSON processing -->
+        <Logger name="com.fasterxml.jackson" level="WARN" additivity="false">
+            <AppenderRef ref="AsyncFileAppender"/>
+            <AppenderRef ref="AsyncErrorFileAppender"/>
+            <AppenderRef ref="AsyncConsole"/>
+        </Logger>
+
+        <!-- Tomcat embedded server -->
+        <Logger name="org.apache.catalina" level="WARN" additivity="false">
+            <AppenderRef ref="AsyncFileAppender"/>
+            <AppenderRef ref="AsyncErrorFileAppender"/>
+            <AppenderRef ref="AsyncConsole"/>
+        </Logger>
+
+        <Logger name="org.apache.tomcat" level="WARN" additivity="false">
+            <AppenderRef ref="AsyncFileAppender"/>
+            <AppenderRef ref="AsyncErrorFileAppender"/>
+            <AppenderRef ref="AsyncConsole"/>
+        </Logger>
+
+        <!-- HikariCP connection pool -->
+        <Logger name="com.zaxxer.hikari" level="WARN" additivity="false">
+            <AppenderRef ref="AsyncFileAppender"/>
+            <AppenderRef ref="AsyncErrorFileAppender"/>
+            <AppenderRef ref="AsyncConsole"/>
+        </Logger>
+
+        <!-- Spring AI Chat -->
+        <Logger name="org.springframework.ai.chat.client.advisor" level="${LLM_LOG_LEVEL}" additivity="false">
+            <AppenderRef ref="AsyncFileAppender"/>
+            <AppenderRef ref="AsyncErrorFileAppender"/>
+            <AppenderRef ref="AsyncConsole"/>
+        </Logger>
+
+        <!-- Application logger -->
+        <Logger name="traderalchemy.analyst.*" level="${LOG_LEVEL}" additivity="false">
+            <AppenderRef ref="AsyncFileAppender"/>
+            <AppenderRef ref="AsyncErrorFileAppender"/>
+            <AppenderRef ref="AsyncConsole"/>
+        </Logger>
+
+        <!-- Root logger -->
+        <Root level="${LOG_LEVEL}">
+            <AppenderRef ref="AsyncFileAppender"/>
+            <AppenderRef ref="AsyncErrorFileAppender"/>
+            <AppenderRef ref="AsyncConsole"/>
+        </Root>
+    </Loggers>
+</Configuration>
